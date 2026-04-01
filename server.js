@@ -1,71 +1,45 @@
 const express = require("express");
-const mysql = require("mysql2");
 const cors = require("cors");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
 // =======================
-// HEALTH CHECK ROUTE
+// 🔑 PUT YOUR SUPABASE HERE
+// =======================
+const supabaseUrl = "https://jllwlxylsxbswpbyaypo.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsbHdseHlsc3hic3dwYnlheXBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjQ5MjcsImV4cCI6MjA5MDY0MDkyN30.LWrxdQqWuvgeUACQrlXSsZYDkY8Jsy6zaLXZ6Ny7DeE";
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// =======================
+// TEST ROUTE (CHECK IF API WORKS)
 // =======================
 app.get("/", (req, res) => {
+  res.json({ message: "API is running 🚀" });
+});
+
+// =======================
+// GET EVENTS (YOUR MAIN API)
+// =======================
+app.get("/events", async (req, res) => {
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .order("id", { ascending: false });
+
+  if (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+
   res.json({
     success: true,
-    message: "Multivent API is running 🚀"
-  });
-});
-
-// =======================
-// DATABASE CONNECTION
-// =======================
-const db = mysql.createConnection({
-  host: "sql101.infinityfree.com",
-  user: "if0_41096969",
-  password: "Shaolin18270601",
-  database: "if0_41096969_deewan"
-});
-
-db.connect((err) => {
-  if (err) {
-    console.log("❌ DB ERROR:", err.message);
-  } else {
-    console.log("✅ MySQL Connected");
-  }
-});
-
-// =======================
-// GET EVENTS API
-// =======================
-app.get("/events", (req, res) => {
-  const sql = "SELECT id, title, location, date FROM events ORDER BY id DESC";
-
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.log("❌ QUERY ERROR:", err.message);
-
-      return res.status(500).json({
-        success: false,
-        message: "Database query failed",
-        error: err.message
-      });
-    }
-
-    res.json({
-      success: true,
-      data: results
-    });
-  });
-});
-
-// =======================
-// HANDLE UNKNOWN ROUTES (IMPORTANT)
-// =======================
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found"
+    data: data
   });
 });
 
@@ -75,5 +49,5 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("🚀 Server running on port " + PORT);
+  console.log("Server running on port " + PORT);
 });
