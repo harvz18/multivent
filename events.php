@@ -1,16 +1,43 @@
 <?php
-header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
 
-$ch = curl_init();
+// TURN OFF HTML ERRORS (VERY IMPORTANT)
+ini_set('display_errors', 0);
+error_reporting(0);
 
-curl_setopt($ch, CURLOPT_URL, "https://shao.infinityfree.me/api/events.php");
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "User-Agent: Mozilla/5.0"
+$conn = new mysqli(
+    "sql101.infinityfree.com",
+    "if0_41096969",
+    "Shaolin18270601",
+    "if0_41096969_deewan"
+);
+
+// If DB fails → return JSON (NOT HTML)
+if ($conn->connect_error) {
+    http_response_code(500);
+    echo json_encode([
+        "success" => false,
+        "error" => "Database connection failed"
+    ]);
+    exit;
+}
+
+$sql = "SELECT id, title, location, date FROM events ORDER BY id DESC";
+$result = $conn->query($sql);
+
+$data = [];
+
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
+}
+
+echo json_encode([
+    "success" => true,
+    "data" => $data
 ]);
 
-$response = curl_exec($ch);
-curl_close($ch);
-
-echo $response;
+$conn->close();
+?>
